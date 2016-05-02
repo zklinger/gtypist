@@ -72,3 +72,6 @@ src/cmdline.h
 
 # ignore personal TODO files
 TODO-personal-*
+
+# ctags
+tags
