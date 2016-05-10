@@ -72,6 +72,8 @@ extern char *__last_label;
 
 void __update_last_label (const char *);
 
+void check_script_file_with_current_encoding( FILE *);
+
 /* a global area for label indexing - singly linked lists, hashed */
 #define	NLHASH			32		/* num hash lists */
 struct label_entry {

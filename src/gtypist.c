@@ -54,6 +54,7 @@
 #include "infoview.h"
 #include "speedbox.h"
 #include "cmdline.h"
+#include "banner.h"
 
 #include "gettext.h"
 #define _(String) gettext (String)
@@ -74,23 +75,23 @@ int isUTF8Locale; /* does the current locale have a UTF-8 encoding? */
 #endif
 
 /* mode indicator strings */
-char *MODE_TUTORIAL;
-char *MODE_QUERY;
-char *MODE_DRILL;
-char *MODE_SPEEDTEST;
+const char *MODE_TUTORIAL;
+const char *MODE_QUERY;
+const char *MODE_DRILL;
+const char *MODE_SPEEDTEST;
 
 /* yes/no responses and miscellanea */
 #define	QUERY_Y			'Y'
 #define	QUERY_N			'N'
 #define	DRILL_CH_ERR		'^'
 #define	DRILL_NL_ERR		'^'
-char *WAIT_MESSAGE;
-char *ERROR_TOO_HIGH_MSG;
-char *SKIPBACK_VIA_F_MSG;
-char *REPEAT_NEXT_EXIT_MSG;
-char *REPEAT_EXIT_MSG;
-char *CONFIRM_EXIT_LESSON_MSG;
-char *NO_SKIP_MSG;
+const char *WAIT_MESSAGE;
+const char *ERROR_TOO_HIGH_MSG;
+const char *SKIPBACK_VIA_F_MSG;
+const char *REPEAT_NEXT_EXIT_MSG;
+const char *REPEAT_EXIT_MSG;
+const char *CONFIRM_EXIT_LESSON_MSG;
+const char *NO_SKIP_MSG;
 wchar_t *YN;
 wchar_t *RNE;
 
@@ -164,7 +165,7 @@ static bool user_is_always_sure = FALSE;
 /* prototypes */
 
 static int getch_fl( int cursor_char );
-static bool wait_user (FILE *script, char *message, char *mode );
+static bool wait_user (FILE *script, const char *message, const char *mode );
 static void display_speed( int total_chars, double elapsed_time, int errcount );
 static void do_keybind( FILE *script, char *line );
 static void do_tutorial( FILE *script, char *line );
@@ -175,7 +176,7 @@ static void do_speedtest( FILE *script, char *line );
 static void do_clear( FILE *script, char *line );
 static void do_goto( FILE *script, char *line, bool flag );
 static char do_query_repeat( FILE *script, bool allow_next );
-static bool do_query_simple( char *text );
+static bool do_query_simple( const char *text );
 static bool do_query( FILE *script, char *line );
 static void do_error_max_set( FILE *script, char *line );
 static void do_on_failure_label_set( FILE *script, char *line );
@@ -280,7 +281,7 @@ getch_fl( int cursor_char )
   wait for a nod from the user before continuing. In MODE_TUTORIAL only, TRUE is
   returned if the user pressed escape to indicate that seek_label was called
 */
-static bool wait_user (FILE *script, char *message, char *mode)
+static bool wait_user (FILE *script, const char *message, const char *mode)
 {
   int	resp;			/* response character */
   bool	seek_done = FALSE;	/* was seek_label called? */
@@ -1181,7 +1182,7 @@ do_query_repeat ( FILE *script, bool allow_next )
   This is used to let the user confirm (E)xit.
 */
 static bool
-do_query_simple ( char *text )
+do_query_simple ( const char *text )
 {
   int resp;
 

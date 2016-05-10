@@ -60,7 +60,7 @@ void do_speed_box( int total_chars, int error_chars,
   char *p;
 
   /* set up display strings */
-  static char *SPEED_RAW_WPM, *SPEED_RAW_CPM, *SPEED_ADJ_WPM, *SPEED_ADJ_CPM,
+  static const char *SPEED_RAW_WPM, *SPEED_RAW_CPM, *SPEED_ADJ_WPM, *SPEED_ADJ_CPM,
 	  *SPEED_PCT_ERROR, *SPEED_BEST_WPM, *SPEED_BEST_CPM, *SPEED_BEST_NEW_MSG;
   static bool first_time = TRUE;
   if( first_time ) {

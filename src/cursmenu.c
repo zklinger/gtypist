@@ -20,6 +20,7 @@
 #include "config.h"
 #include "cursmenu.h"
 #include "script.h"
+#include "utf8.h"
 
 #ifdef HAVE_PDCURSES
 #include <curses.h>

@@ -19,6 +19,7 @@
 //	Header for some interface details.
 
 #include <malloc.h>
+#include <stdlib.h>
 #include "banner.h"
 #include "utf8.h"
 #include "config.h"
