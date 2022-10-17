@@ -75,7 +75,7 @@ case $host_os in
     AC_CHECK_HEADER(curses.h, [], [AC_MSG_ERROR(
       [curses.h header is missing: See INSTALL file for further information])])
     # check for libncursesw
-    AC_CHECK_LIB(ncursesw, add_wch, [], [AC_MSG_ERROR(
+    AC_CHECK_LIB(ncurses, add_wch, [], [AC_MSG_ERROR(
       [ncursesw library is missing: See INSTALL file for further information])])
     ;;
   *)
