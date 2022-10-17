@@ -72,8 +72,12 @@
 extern int global_line_counter;
 
 extern char *__last_label;
+extern char *__last_banner;
 
 void __update_last_label(const char *);
+void __update_last_banner (const char *);
+
+void check_script_file_with_current_encoding( FILE *);
 
 /* a global area for label indexing - singly linked lists, hashed */
 #define	NLHASH			32	/* num hash lists */

@@ -49,6 +49,7 @@ struct label_entry *global_label_list[NLHASH];
 
 // Nobody bothers to free this string at exit.
 char *__last_label = NULL;
+char *__last_banner = NULL;
 
 void __update_last_label (const char *label)
 {
@@ -56,6 +57,18 @@ void __update_last_label (const char *label)
      free (__last_label);
   __last_label = strdup (label);
   if (!__last_label)
+  {
+     perror ("strdup");
+     fatal_error (_("internal error: strdup"), label);
+  }
+}
+
+void __update_last_banner (const char *label)
+{
+  if (__last_banner)
+     free (__last_banner);
+  __last_banner = strdup (label);
+  if (!__last_banner)
   {
      perror ("strdup");
      fatal_error (_("internal error: strdup"), label);

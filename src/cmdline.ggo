@@ -37,6 +37,8 @@ option "scoring"        - "set scoring mode; valid values are \"wpm\" (words per
     enum values="wpm","cpm" typestr="MODE"
 option "no-welcome-screen"         - "don't show beginner tutorial message at start-up"
     flag off
+option "resume-last-lesson"  r "resume from last lesson"
+    flag off
 
 text "\nIf not supplied, script-file defaults to the 'gtypist.typ' that came with this software.  If you specify a script, the path $GTYPIST_PATH is searched for script files.\n"
 

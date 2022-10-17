@@ -112,9 +112,15 @@ wchar_t *RNE;
 #ifdef MINGW
 #define BESTLOG_FILENAME    "gtypist-bestlog"
 #define CONFIG_FILENAME     "gtypistrc"
+#define BESTLOG_FILENAME        "gtypist-bestlog"
+#define CONFIG_FILENAME         "gtypistrc"
+#define LASTPRACTICE_FILENAME   "gtypist-lastpractice"
 #else
 #define BESTLOG_FILENAME    ".gtypist-bestlog"
 #define CONFIG_FILENAME     ".gtypistrc"
+#define BESTLOG_FILENAME        ".gtypist-bestlog"
+#define CONFIG_FILENAME         ".gtypistrc"
+#define LASTPRACTICE_FILENAME   ".gtypist-lastpractice"
 #endif
 
 
@@ -185,7 +191,7 @@ static bool do_query_simple( char *text );
 static bool do_query( FILE *script, char *line );
 static void do_error_max_set( FILE *script, char *line );
 static void do_on_failure_label_set( FILE *script, char *line );
-static void parse_file( FILE *script, char *label );
+static void parse_file( FILE *script, char *label, long offset );
 static void catcher( int signal );
 static FILE *open_script( const char *filename );
 static void do_bell();
@@ -193,7 +199,11 @@ static bool get_best_speed( const char *script_filename,
                             const char *excersise_label, double *adjusted_cpm );
 static void put_best_speed(const char *script_filename,
                            const char *exercise_label, double adjusted_cpm );
+static void put_last_practice_info(const char *script_filename, long filePosition);
 const char *get_bestlog_filename();
+const char *get_last_lesson_filename();
+void parse_last_practice_details(char *filepath, long *file_offset, char *banner);
+
 
 void bind_F12(const char *label)
 {
@@ -451,6 +461,9 @@ void do_tutorial( FILE *script, char *line )
 static
 void do_instruction( FILE *script, char *line )
 {
+  long filePosition = ftell( script ) - strlen(line) - 1;
+  put_last_practice_info(global_script_filename, filePosition);
+
   /* move to the instruction line and output the first bit */
   move( I_TOP_LINE, 0 ); clrtobot();
   ADDSTR( SCR_DATA( line ));
@@ -1108,6 +1121,7 @@ void do_clear (FILE *script, char *line)
   move( B_TOP_LINE , 0 ); clrtobot();
 
   banner (SCR_DATA (line));
+  __update_last_banner (SCR_DATA (line));
 
   /* finally, get the next script command */
   get_script_line( script, line );
@@ -1478,7 +1492,7 @@ void do_on_failure_label_set( FILE *script, char *line )
   execute the directives in the script file
 */
 static
-void parse_file( FILE *script, char *label )
+void parse_file( FILE *script, char *label, long offset )
 {
   char	line[MAX_SCR_LINE];		/* line buffer */
   char	command;          /* current command */
@@ -1488,6 +1502,10 @@ void parse_file( FILE *script, char *label )
   {
     /* find the label we want to start at */
     seek_label( script, label, NULL );
+  } else if ( offset > 0 ) {
+      /* start from last lesson*/
+      if ( fseek( script, offset, SEEK_SET ) == -1 )
+        fatal_error( _("internal error: fseek"), 0 );
   } else {
     /* start at the very beginning (a very good place to start) */
     rewind( script );
@@ -1653,6 +1671,8 @@ int main( int argc, char **argv )
   FILE	*script;			/* script file handle */
   char	*p, filepath[FILENAME_MAX];	/* file paths */
   char	script_file[FILENAME_MAX];	/* more file paths */
+  char banner_text[FILENAME_MAX];
+  long  file_offset;
 
   /* get our program name */
   argv0 = argv[0] + strlen( argv[0] );
@@ -1758,7 +1778,13 @@ int main( int argc, char **argv )
   parse_cmdline_and_config( argc, argv );
 
   /* figure out what script file to use */
-  if ( cl_args.inputs_num == 1 )
+  if ( cl_args.resume_last_lesson_flag == 1 )
+  {
+     parse_last_practice_details(script_file, &file_offset, banner_text);
+     __update_last_banner( banner_text );
+     banner( __last_banner );
+    script = open_script( script_file );
+  } else if ( cl_args.inputs_num == 1 )
   {
     /* try and open scipr file from command line */
     strcpy( script_file, cl_args.inputs[ 0 ] );
@@ -1851,7 +1877,14 @@ int main( int argc, char **argv )
 
   /* put up the top line banner */
   clear();
-  banner (_("Loading the script..."));
+  if (__last_banner != NULL)
+  {
+     banner (_(__last_banner));
+  }
+  else
+  {
+     banner (_("Loading the script..."));
+  }
 
   if (!cl_args.no_welcome_screen_flag)
   {
@@ -1868,7 +1901,7 @@ int main( int argc, char **argv )
   build_label_index( script );
 
   /* run the input file */
-  parse_file( script, cl_args.start_label_arg );
+  parse_file( script, cl_args.start_label_arg, file_offset );
   do_exit( script );
 
   /* for lint... */
@@ -1994,6 +2027,25 @@ void put_best_speed(const char *script_filename,
   fclose( blfile );
 }
 
+static void put_last_practice_info( const char *script_filename, long filePosition)
+{
+  FILE *fp;
+
+  /* open best speeds files */
+  fp = fopen( get_last_lesson_filename(), "w" );
+  if( fp == NULL )
+  {
+    perror( "fopen" );
+    fatal_error( _("internal error: fopen" ), NULL );
+  }
+
+  /* write info about last practice */
+  fprintf( fp, "%s\n%ld\n%s\n", script_filename, filePosition, __last_banner);
+
+  /* cleanup */
+  fclose( fp );
+}
+
 const char *get_config_filename()
 {
   static char *filename = NULL;
@@ -2032,6 +2084,53 @@ const char *get_bestlog_filename()
   }
 
   return filename;
+}
+
+const char *get_last_lesson_filename()
+{
+  static char *filename = NULL;
+
+  if( filename == NULL )
+  {
+    // calculate file name
+    filename = (char *)malloc(strlen( global_home_dir ) + strlen( LASTPRACTICE_FILENAME ) + 2 );
+    if( filename == NULL )
+    {
+      perror( "malloc" );
+      fatal_error( _( "internal error: malloc" ), NULL );
+    }
+    sprintf( filename, "%s/%s", global_home_dir, LASTPRACTICE_FILENAME );
+  }
+
+  return filename;
+}
+
+void parse_last_practice_details(char *filepath, long *file_offset, char *banner)
+{
+  // Open the file
+  FILE *fp = fopen( get_last_lesson_filename(), "r" );
+  char buff[MAX_SCR_LINE];
+  if( fp == NULL )
+  {
+    fprintf( stderr, "%s: %s %s\n",
+            argv0, _("can't find or open file"), get_last_lesson_filename() );
+    exit( 1 );
+  }
+
+
+  // First line contains the lesson file name
+  fgets(filepath, MAX_SCR_LINE, fp);
+  filepath[strcspn(filepath, "\r\n")] = 0; // strip newline from the end of string
+
+  // Second line is the file offset to start the lesson from
+  fgets(buff, MAX_SCR_LINE, fp);
+  *file_offset = atoi(buff);
+
+  // Banner text
+  fgets(banner, MAX_SCR_LINE, fp);
+  banner[strcspn(banner, "\r\n")] = 0;
+
+  fclose(fp);
 }
 
 
